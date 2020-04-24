@@ -1,0 +1,41 @@
+version: 1
+
+## Entries already exists / provided by docker container:
+
+## Entry 1: dc=my-test-company-domain,dc=com
+#
+#dn: dc=my-test-company-domain,dc=com
+#dc: my-test-company-domain
+#o: My Test Company Inc.
+#objectclass: top
+#objectclass: dcObject
+#objectclass: organization
+
+## Entry 2: cn=admin,dc=my-test-company-domain,dc=com
+##
+## user: cn=admin,dc=my-test-company-domain,dc=com
+## password: admin
+#
+#dn: cn=admin,dc=my-test-company-domain,dc=com
+#cn: admin
+#description: My Test Company LDAP administrator
+#objectclass: simpleSecurityObject
+#objectclass: organizationalRole
+#userpassword: adm1nZupperUberP@assw0rd!!1111oneoneone
+#old userpassword: {SSHA}Dy0S5L/AiPvUBiStcqeq6Z9TFkdDSkOB
+
+
+# Entry 3: uid=user,dc=my-test-company-domain,dc=com
+#
+# user: uid=user,dc=my-test-company-domain,dc=com
+# password: password
+
+dn: uid=user,dc=my-test-company-domain,dc=com
+uid: user
+cn: user
+sn: 3
+description: My Test Company LDAP user organization account
+objectclass: top
+objectClass: inetOrgPerson
+mail: user@my-test-company-domain.com
+userPassword: password

@@ -1,0 +1,47 @@
+name: CI
+on: [push]
+env:
+  SPRING_PROFILES_ACTIVE: ci
+jobs:
+  step-0-hello-ldap:
+    strategy:
+      matrix:
+        java: [11]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-0-hello-ldap
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
+          ${{ runner.os }}-maven-
+          ${{ runner.os }}-node-
+          ${{ runner.os }}-npm-
+          ${{ runner.os }}-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.docker
+        key: ${{ runner.os }}-docker-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
+          ${{ runner.os }}-maven-
+          ${{ runner.os }}-node-
+          ${{ runner.os }}-npm-
+          ${{ runner.os }}-
+          ${{ runner.os }}-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - run: command -v docker >/dev/null 2>&1 || { echo >&2 "I require docker but it's not installed.  Aborting."; exit 1; }
+    - run: sudo apt-get install -y curl httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-0-hello-ldap clean package spring-boot:build-image docker-compose:up
+    - run: while [[ ! `curl -s -o /dev/null -w "%{http_code}" 0:8080/actuator/health` -eq 200 ]] ; do sleep 1s ; echo -n '.' ; done
+    - run: curl 0:8080/actuator/health
+    - run: curl -sS 0:8080
+    - run: curl -sS 0:8080 | jq '.'
+    - run: http --ignore-stdin get :8080 query=objectClass=top
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-0-hello-ldap docker-compose:down

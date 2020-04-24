@@ -1,0 +1,56 @@
+version: '2.1'
+networks:
+  my-test-company-domain.com:
+services:
+  ldap:
+    hostname: ldap.my-test-company-domain.com
+    build: ./ldap
+    environment:
+      ## ldap configs:
+      LDAP_ORGANISATION: My Test Company Inc.
+      LDAP_DOMAIN: my-test-company-domain.com
+      #LDAP_BASE_DN: dc=my-test-company-domain,dc=com
+      LDAP_ADMIN_PASSWORD: adm1nZupperUberP@assw0rd!!1111oneoneone
+      #LDAP_CONFIG_PASSWORD: config
+      #LDAP_RFC2307BIS_SCHEMA: 'false'
+      #LDAP_READONLY_USER: 'false'
+      #LDAP_READONLY_USER_USERNAME: readonly
+      #LDAP_READONLY_USER_PASSWORD: readonly
+      # ldap backup configs:
+      LDAP_BACKUP_CONFIG_CRON_EXP: '* * * * *'
+      LDAP_BACKUP_DATA_CRON_EXP: '*/15 * * * *'
+      LDAP_BACKUP_TTL: 7
+    ports:
+    - '389:389'
+    - '636:636'
+    networks:
+      my-test-company-domain.com:
+        aliases:
+          - ldap
+          - ldap.my-test-company-domain.com
+    healthcheck:
+      test: ( ( test 1 -eq `ss -tulwn | grep '0.0.0.0:389' | wc -l` ) && ( test 1 -eq `ss -tulwn | grep '0.0.0.0:636' | wc -l` ) ) || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 55
+  ldap-admin-ui:
+    image: osixia/phpldapadmin:0.9.0
+    depends_on:
+      ldap:
+        condition: service_healthy
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: ldap.my-test-company-domain.com
+      LDAP_USER: cn=admin,dc=my-test-company-domain,dc=com
+      LDAP_PASSWORD: adm1nZupperUberP@assw0rd!!1111oneoneone
+    ports: ['443:443']
+    # export PHPLDAP_IP=$(docker inspect -f "{{ .NetworkSettings.IPAddress }}" dap-admin-ui)
+    networks: [my-test-company-domain.com]
+  step-0-hello-ldap:
+    image: daggerok/spring-data-ldap-example-step-0-hello-ldap
+    depends_on:
+      ldap:
+        condition: service_healthy
+    environment:
+      LDAP_HOST: ldap.my-test-company-domain.com
+    networks: [my-test-company-domain.com]
+    ports: ['8080:8080']
